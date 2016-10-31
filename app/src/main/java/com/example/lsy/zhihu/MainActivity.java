@@ -115,12 +115,12 @@ public class MainActivity extends AppCompatActivity
             story.setSpaceText(outputFormat.format(date));
             adapter.getStoryList().add(story);
             adapter.addStoryList(dailyNews.getStories());
-            ValueAnimator valueAnimator=ValueAnimator.ofInt(0,-20);
+            ValueAnimator valueAnimator=ValueAnimator.ofInt(0,10);
             valueAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
                 @Override
                 public void onAnimationUpdate(ValueAnimator animation) {
                     int offsetY=(int)animation.getAnimatedValue();
-                    recyclerView.offsetChildrenVertical(offsetY);
+                    recyclerView.scrollBy(0,offsetY);
                 }
             });
             valueAnimator.start();
@@ -182,9 +182,6 @@ public class MainActivity extends AppCompatActivity
             public void onClick(View view) {
                 Snackbar.make(view,getBeforeData(beforeDay++), Snackbar.LENGTH_LONG)
                         .setAction("Action", null).show();
-                contentSwipe.setRefreshing(true);
-                getZhiHuData();
-
             }
         });
 

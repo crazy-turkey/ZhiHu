@@ -1,8 +1,12 @@
 package com.example.lsy.zhihu;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.View;
 import android.support.design.widget.NavigationView;
 import android.support.v4.view.GravityCompat;
@@ -13,10 +17,26 @@ import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
 
+import com.example.lsy.zhihu.NetWork.NetWork;
+import com.example.lsy.zhihu.bean.DailyNews;
+import com.example.lsy.zhihu.util.ItemOnClick;
+import com.example.lsy.zhihu.util.ZhiHuAdapter;
+
 import butterknife.BindView;
+import butterknife.ButterKnife;
+import rx.Observer;
+import rx.Subscription;
+import rx.android.schedulers.AndroidSchedulers;
+import rx.schedulers.Schedulers;
 
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
+
+    protected final LinearLayoutManager ll=new LinearLayoutManager(this);
+    protected ZhiHuAdapter adapter=new ZhiHuAdapter();
+
+    @BindView(R.id.recycler_view)
+    RecyclerView recyclerView;
 
     @BindView(R.id.toolbar)
     Toolbar toolbar;
@@ -24,11 +44,47 @@ public class MainActivity extends AppCompatActivity
     @BindView(R.id.drawer_layout)
     DrawerLayout drawer;
 
+
+
+    Observer<DailyNews> observer=new Observer<DailyNews>() {
+        @Override
+        public void onCompleted() {
+            Log.e("observer","onCompleted");
+        }
+
+        @Override
+        public void onError(Throwable e) {
+            Log.e("observer",e.toString());
+        }
+
+        @Override
+        public void onNext(DailyNews dailyNews) {
+            Log.e("onNext",dailyNews.getDate().toString());
+            adapter.setStoryList(dailyNews.getStories());
+        }
+    };
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        ButterKnife.bind(this);
         setSupportActionBar(toolbar);
+
+        recyclerView.setLayoutManager(ll);
+        recyclerView.setAdapter(adapter);
+        adapter.setItemOnClick(new ItemOnClick() {
+            @Override
+            public void onClick(View view, int position) {
+                //Bundle bundle=new Bundle();
+                Intent intent=new Intent(MainActivity.this,NewActivity.class);
+                String newId=adapter.getStoryList().get(position).getId();
+                intent.putExtra("newId",newId);
+                startActivity(intent);
+
+            }
+        });
+
 
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
@@ -36,6 +92,13 @@ public class MainActivity extends AppCompatActivity
             public void onClick(View view) {
                 Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
                         .setAction("Action", null).show();
+                Subscription sub= NetWork.getZhiHuApi()
+                        .getDailyNews()
+                        .observeOn(AndroidSchedulers.mainThread())
+                        .subscribeOn(Schedulers.io())
+                        .subscribe(observer);
+
+
             }
         });
 

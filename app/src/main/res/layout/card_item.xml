@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<android.support.v7.widget.CardView
+    android:id="@+id/news_list_card_view"
+    android:layout_height="wrap_content"
+    android:layout_width="match_parent"
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:card_view="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_margin="@dimen/card_margin">
+
+        <ImageView
+            android:id="@+id/thumbnail_image"
+            android:layout_height="@dimen/thumbnail_image_size"
+            android:layout_width="@dimen/thumbnail_image_size"
+            android:layout_alignParentRight="true"
+            android:padding="@dimen/thumbnail_image_padding"
+            android:contentDescription="@string/thumbnail_image_description"/>
+
+        <TextView
+            android:layout_height="wrap_content"
+            android:layout_width="wrap_content"
+            android:textIsSelectable="false"
+            android:id="@+id/zhihu_title"
+            android:textSize="17sp"
+            android:textStyle="bold"
+            android:layout_alignParentTop="true"
+            android:layout_alignParentLeft="true"
+            android:layout_alignParentStart="true"
+            android:layout_toLeftOf="@+id/thumbnail_image"/>
+
+
+    </RelativeLayout>
+</android.support.v7.widget.CardView>

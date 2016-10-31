@@ -1,5 +1,7 @@
 package com.example.lsy.zhihu;
 
+import android.animation.ObjectAnimator;
+import android.animation.ValueAnimator;
 import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
@@ -21,8 +23,14 @@ import android.view.MenuItem;
 
 import com.example.lsy.zhihu.NetWork.NetWork;
 import com.example.lsy.zhihu.bean.DailyNews;
+import com.example.lsy.zhihu.bean.Story;
 import com.example.lsy.zhihu.util.ItemOnClick;
 import com.example.lsy.zhihu.util.ZhiHuAdapter;
+
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.Date;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
@@ -32,11 +40,14 @@ import rx.android.schedulers.AndroidSchedulers;
 import rx.schedulers.Schedulers;
 
 public class MainActivity extends AppCompatActivity
-        implements NavigationView.OnNavigationItemSelectedListener {
+        implements NavigationView.OnNavigationItemSelectedListener{
 
     protected final LinearLayoutManager ll = new LinearLayoutManager(this);
     protected ZhiHuAdapter adapter = new ZhiHuAdapter();
     protected Subscription sub;
+    private int lastVisibleItem=0;
+    private int beforeDay=0;
+    private Calendar today=Calendar.getInstance();
 
     @BindView(R.id.recycler_view)
     RecyclerView recyclerView;
@@ -51,22 +62,69 @@ public class MainActivity extends AppCompatActivity
     SwipeRefreshLayout contentSwipe;
 
 
-    Observer<DailyNews> observer = new Observer<DailyNews>() {
+    Observer<DailyNews> TodayNewObserver = new Observer<DailyNews>() {
         @Override
         public void onCompleted() {
-            Log.e("observer", "onCompleted");
+            Log.e("TodayNewObserver", "onCompleted");
         }
 
         @Override
         public void onError(Throwable e) {
-            Log.e("observer", e.toString());
+            Log.e("TodayNewObserver", e.toString());
         }
 
         @Override
         public void onNext(DailyNews dailyNews) {
             Log.e("onNext", dailyNews.getDate().toString());
             contentSwipe.setRefreshing(false);
+            Story story=new Story();
+            story.setIsNew(false);
+            story.setSpaceText("今日热文");
+//            SimpleDateFormat format=new SimpleDateFormat("MM-dd");
+//            story.setSpaceText(format.format(today.getTime()));
+            dailyNews.getStories().add(0,story);
+//            dailyNews.getStories().add(story);
             adapter.setStoryList(dailyNews.getStories());
+        }
+    };
+
+    Observer<DailyNews> beforeNewObserver=new Observer<DailyNews>() {
+        @Override
+        public void onCompleted() {
+            Log.e("TodayNewObserver", "onCompleted");
+        }
+
+        @Override
+        public void onError(Throwable e) {
+            Log.e("TodayNewObserver", e.toString());
+        }
+
+        @Override
+        public void onNext(DailyNews dailyNews) {
+            contentSwipe.setRefreshing(false);
+            Date date=new Date();
+            SimpleDateFormat inputFormat=new SimpleDateFormat("yyyyMMdd");
+            try {
+                date=inputFormat.parse(dailyNews.getDate().toString());
+            } catch (ParseException e) {
+                e.printStackTrace();
+            }
+            SimpleDateFormat outputFormat=new SimpleDateFormat("MM'月'dd'日'  EEEE");
+            Story story=new Story();
+            story.setIsNew(false);
+            story.setSpaceText(outputFormat.format(date));
+            adapter.getStoryList().add(story);
+            adapter.addStoryList(dailyNews.getStories());
+            ValueAnimator valueAnimator=ValueAnimator.ofInt(0,-20);
+            valueAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+                @Override
+                public void onAnimationUpdate(ValueAnimator animation) {
+                    int offsetY=(int)animation.getAnimatedValue();
+                    recyclerView.offsetChildrenVertical(offsetY);
+                }
+            });
+            valueAnimator.start();
+
         }
     };
 
@@ -77,7 +135,6 @@ public class MainActivity extends AppCompatActivity
         ButterKnife.bind(this);
         setSupportActionBar(toolbar);
         contentSwipe.setRefreshing(true);
-        getZhiHuData();
         contentSwipe.setColorSchemeColors(Color.RED,Color.GREEN,Color.BLUE);
         contentSwipe.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             @Override
@@ -85,9 +142,27 @@ public class MainActivity extends AppCompatActivity
                 getZhiHuData();
             }
         });
+        getZhiHuData();
 
         recyclerView.setLayoutManager(ll);
         recyclerView.setAdapter(adapter);
+        recyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
+            @Override
+            public void onScrollStateChanged(RecyclerView recyclerView, int newState) {
+                super.onScrollStateChanged(recyclerView, newState);
+                if(newState==RecyclerView.SCROLL_STATE_IDLE&&lastVisibleItem+1==adapter.getItemCount()){
+                    lastVisibleItem=0;
+                    contentSwipe.setRefreshing(true);
+                    getBeforeNew(getBeforeData(beforeDay++));
+                }
+            }
+
+            @Override
+            public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
+                super.onScrolled(recyclerView, dx, dy);
+                lastVisibleItem=ll.findLastVisibleItemPosition();
+            }
+        });
         adapter.setItemOnClick(new ItemOnClick() {
             @Override
             public void onClick(View view, int position) {
@@ -105,8 +180,9 @@ public class MainActivity extends AppCompatActivity
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
+                Snackbar.make(view,getBeforeData(beforeDay++), Snackbar.LENGTH_LONG)
                         .setAction("Action", null).show();
+                contentSwipe.setRefreshing(true);
                 getZhiHuData();
 
             }
@@ -120,6 +196,17 @@ public class MainActivity extends AppCompatActivity
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
     }
+
+    private String getBeforeData(int beforeDay) {
+        Date d=new Date();
+        SimpleDateFormat format=new SimpleDateFormat("yyyyMMdd");
+        d=today.getTime();
+        Date date=new Date(d.getTime()-(long)beforeDay*24*60*60*1000);
+        String str=format.format(date);
+        return str;
+    }
+
+
 
     @Override
     public void onBackPressed() {
@@ -183,7 +270,24 @@ public class MainActivity extends AppCompatActivity
                 .getDailyNews()
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribeOn(Schedulers.io())
-                .subscribe(observer);
+                .subscribe(TodayNewObserver);
 
+    }
+
+    private void getBeforeNew(String date) {
+        sub=NetWork.getZhiHuApi()
+                .getBeforData(date)
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribeOn(Schedulers.io())
+                .subscribe(beforeNewObserver);
+
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        if(!sub.isUnsubscribed()){
+            sub.unsubscribe();
+        }
     }
 }

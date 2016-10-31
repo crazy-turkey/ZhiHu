@@ -10,6 +10,7 @@ import android.support.v4.media.MediaMetadataCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
+import android.view.MenuItem;
 import android.view.View;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
@@ -81,7 +82,7 @@ public class NewActivity extends AppCompatActivity {
         @Override
         public void onNext(final NewApi newApi) {
             //Log.e("NewActivity",newApi.toString());
-            webView.loadData(newApi.getBody(),"text/html","UTF-8");
+            webView.loadData(newApi.getBody(), "text/html", "UTF-8");
             webView.loadDataWithBaseURL(null, newApi.getBody(), "text/html", "UTF-8", null);
 //            collapsingToolbarLayout.setTitle(newApi.getTitle());
 //            collapsingToolbarLayout.setCollapsedTitleTextAppearance(R.style.new_toolbar_title_style);
@@ -92,11 +93,11 @@ public class NewActivity extends AppCompatActivity {
                 @Override
                 public void onOffsetChanged(AppBarLayout appBarLayout, int verticalOffset) {
                     //初始状态
-                    if(verticalOffset==0){
+                    if (verticalOffset == 0) {
                         collapsingToolbarLayout.setTitleEnabled(false);
                         collapsingToolbarLayout.setTitle("");
                         newTitle.setVisibility(View.VISIBLE);
-                    }else if(Math.abs(verticalOffset)>=appBarLayout.getTotalScrollRange()){
+                    } else if (Math.abs(verticalOffset) >= appBarLayout.getTotalScrollRange()) {
                         collapsingToolbarLayout.setTitleEnabled(true);
                         collapsingToolbarLayout.setTitle(newApi.getTitle());
                         newTitle.setVisibility(View.INVISIBLE);
@@ -107,15 +108,15 @@ public class NewActivity extends AppCompatActivity {
     };
 
     private void loadingImage(final String url) {
-        Observer<Bitmap> loadIamge=new Observer<Bitmap>() {
+        Observer<Bitmap> loadIamge = new Observer<Bitmap>() {
             @Override
             public void onCompleted() {
-                Log.e("loadingImage","onCompleted");
+                Log.e("loadingImage", "onCompleted");
             }
 
             @Override
             public void onError(Throwable e) {
-                Log.e("loadingImage",e.toString());
+                Log.e("loadingImage", e.toString());
             }
 
             @Override
@@ -125,11 +126,12 @@ public class NewActivity extends AppCompatActivity {
             }
         };
         Observable.create(new Observable.OnSubscribe<Bitmap>() {
-            Bitmap bitmap=null;
+            Bitmap bitmap = null;
+
             @Override
             public void call(Subscriber<? super Bitmap> subscriber) {
                 try {
-                    bitmap=Picasso.with(NewActivity.this).load(url).get();
+                    bitmap = Picasso.with(NewActivity.this).load(url).get();
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
@@ -148,6 +150,12 @@ public class NewActivity extends AppCompatActivity {
         setSupportActionBar(toolbar);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         getSupportActionBar().setTitle("");
+        toolbar.setNavigationOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                onBackPressed();
+            }
+        });
         setWebSetting();
         newId = getIntent().getStringExtra("newId");
         Toast.makeText(NewActivity.this, newId, Toast.LENGTH_SHORT).show();
@@ -162,13 +170,18 @@ public class NewActivity extends AppCompatActivity {
         WebSettings webSettings = webView.getSettings();
         //webSettings.setTextSize(WebSettings.TextSize.LARGEST);
 //        webSettings.setDefaultFixedFontSize(20);
-        webSettings.setDefaultFontSize(30);
+        webSettings.setDefaultFontSize(25);
         webSettings.setJavaScriptEnabled(true);
         webSettings.setDefaultTextEncodingName("UTF-8");
         webSettings.setAppCacheEnabled(true);
         webSettings.setRenderPriority(WebSettings.RenderPriority.HIGH);  //提高渲染的优先级
         webSettings.setUseWideViewPort(true);  //将图片调整到适合webview的大小
         webSettings.setLoadWithOverviewMode(true); // 缩放至屏幕的大小
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        return super.onOptionsItemSelected(item);
     }
 
     private void setData() {

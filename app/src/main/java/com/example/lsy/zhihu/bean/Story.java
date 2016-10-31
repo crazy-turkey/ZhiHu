@@ -11,6 +11,24 @@ public class Story {
     protected List<String> images;
     protected String image;
     protected String id;
+    protected boolean isNew=true;
+    protected String spaceText;
+
+    public String getSpaceText() {
+        return spaceText;
+    }
+
+    public void setSpaceText(String text) {
+        this.spaceText = text;
+    }
+
+    public boolean getIsNew() {
+        return isNew;
+    }
+
+    public void setIsNew(boolean aNew) {
+        isNew = aNew;
+    }
 
     public String getTitle() {
         return title;

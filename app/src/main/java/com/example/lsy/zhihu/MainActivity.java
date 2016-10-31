@@ -1,9 +1,11 @@
 package com.example.lsy.zhihu;
 
 import android.content.Intent;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
+import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
@@ -32,8 +34,9 @@ import rx.schedulers.Schedulers;
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
 
-    protected final LinearLayoutManager ll=new LinearLayoutManager(this);
-    protected ZhiHuAdapter adapter=new ZhiHuAdapter();
+    protected final LinearLayoutManager ll = new LinearLayoutManager(this);
+    protected ZhiHuAdapter adapter = new ZhiHuAdapter();
+    protected Subscription sub;
 
     @BindView(R.id.recycler_view)
     RecyclerView recyclerView;
@@ -44,22 +47,25 @@ public class MainActivity extends AppCompatActivity
     @BindView(R.id.drawer_layout)
     DrawerLayout drawer;
 
+    @BindView(R.id.content_swipe)
+    SwipeRefreshLayout contentSwipe;
 
 
-    Observer<DailyNews> observer=new Observer<DailyNews>() {
+    Observer<DailyNews> observer = new Observer<DailyNews>() {
         @Override
         public void onCompleted() {
-            Log.e("observer","onCompleted");
+            Log.e("observer", "onCompleted");
         }
 
         @Override
         public void onError(Throwable e) {
-            Log.e("observer",e.toString());
+            Log.e("observer", e.toString());
         }
 
         @Override
         public void onNext(DailyNews dailyNews) {
-            Log.e("onNext",dailyNews.getDate().toString());
+            Log.e("onNext", dailyNews.getDate().toString());
+            contentSwipe.setRefreshing(false);
             adapter.setStoryList(dailyNews.getStories());
         }
     };
@@ -70,6 +76,15 @@ public class MainActivity extends AppCompatActivity
         setContentView(R.layout.activity_main);
         ButterKnife.bind(this);
         setSupportActionBar(toolbar);
+        contentSwipe.setRefreshing(true);
+        getZhiHuData();
+        contentSwipe.setColorSchemeColors(Color.RED,Color.GREEN,Color.BLUE);
+        contentSwipe.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
+            @Override
+            public void onRefresh() {
+                getZhiHuData();
+            }
+        });
 
         recyclerView.setLayoutManager(ll);
         recyclerView.setAdapter(adapter);
@@ -77,9 +92,9 @@ public class MainActivity extends AppCompatActivity
             @Override
             public void onClick(View view, int position) {
                 //Bundle bundle=new Bundle();
-                Intent intent=new Intent(MainActivity.this,NewActivity.class);
-                String newId=adapter.getStoryList().get(position).getId();
-                intent.putExtra("newId",newId);
+                Intent intent = new Intent(MainActivity.this, NewActivity.class);
+                String newId = adapter.getStoryList().get(position).getId();
+                intent.putExtra("newId", newId);
                 startActivity(intent);
 
             }
@@ -92,12 +107,7 @@ public class MainActivity extends AppCompatActivity
             public void onClick(View view) {
                 Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
                         .setAction("Action", null).show();
-                Subscription sub= NetWork.getZhiHuApi()
-                        .getDailyNews()
-                        .observeOn(AndroidSchedulers.mainThread())
-                        .subscribeOn(Schedulers.io())
-                        .subscribe(observer);
-
+                getZhiHuData();
 
             }
         });
@@ -166,5 +176,14 @@ public class MainActivity extends AppCompatActivity
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         drawer.closeDrawer(GravityCompat.START);
         return true;
+    }
+
+    public void getZhiHuData() {
+        sub = NetWork.getZhiHuApi()
+                .getDailyNews()
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribeOn(Schedulers.io())
+                .subscribe(observer);
+
     }
 }

@@ -160,7 +160,9 @@ public class NewActivity extends AppCompatActivity {
 
     private void setWebSetting() {
         WebSettings webSettings = webView.getSettings();
-        webSettings.setTextSize(WebSettings.TextSize.LARGEST);
+        //webSettings.setTextSize(WebSettings.TextSize.LARGEST);
+//        webSettings.setDefaultFixedFontSize(20);
+        webSettings.setDefaultFontSize(30);
         webSettings.setJavaScriptEnabled(true);
         webSettings.setDefaultTextEncodingName("UTF-8");
         webSettings.setAppCacheEnabled(true);

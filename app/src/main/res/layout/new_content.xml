@@ -5,12 +5,13 @@
     android:layout_height="match_parent"
     xmlns:tools="http://schemas.android.com/tools"
     tools:showIn="@layout/new_layout"
+    android:padding="10dp"
     app:layout_behavior="@string/appbar_scrolling_view_behavior">
 
     <WebView
         android:id="@+id/new_web"
         android:layout_width="match_parent"
-        android:layout_height="match_parent" />
+        android:layout_height="wrap_content" />
 
 
 </android.support.v4.widget.NestedScrollView>

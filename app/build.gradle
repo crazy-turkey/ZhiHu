@@ -40,4 +40,5 @@ dependencies {
     compile 'com.github.bumptech.glide:glide:3.7.0'
     compile 'com.google.android.gms:play-services-appindexing:8.4.0'
     compile 'com.squareup.picasso:picasso:2.5.2'
+    compile 'it.chengdazhi.decentbanner:decentbanner:1.0.7'
 }

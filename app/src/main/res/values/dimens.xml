@@ -9,4 +9,5 @@
     <dimen name="card_margin">10dp</dimen>
     <dimen name="thumbnail_image_size">95dp</dimen>
     <dimen name="thumbnail_image_padding">5dp</dimen>
+    <dimen name="item_space">5dp</dimen>
 </resources>
